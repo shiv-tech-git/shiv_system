@@ -7,7 +7,8 @@
 
 using WORD = uint32_t;
 using DWORD = uint64_t;
-
+const static WORD MSB_I = ((sizeof(WORD) * 8) - 1);
+const static WORD CB_I = ((sizeof(WORD) * 8));
 
 class RAM
 {
@@ -35,7 +36,7 @@ private:
     Memory _mem;
 };
 
-class CPU
+class Core
 {
 public:
     enum class Register: uint8_t
@@ -62,7 +63,7 @@ public:
         Negative
     };
     
-    CPU(RAM& ram):
+    Core(RAM& ram):
     _ram(ram)
     {
     }
@@ -135,9 +136,33 @@ public:
         _ram.Write(Reg(addr), Reg(reg1));
     }
 
-    void JumpZero(Register reg, WORD addr)
+    void Jump(Register reg, WORD addr)
     {
         if (!Reg(reg))
+            Reg(Register::IP) = addr;
+    }
+
+    void JumpEqualReg(Register reg)
+    {
+        if (GetFlag(Flag::Zero))
+            Reg(Register::IP) = Reg(reg);
+    }
+
+    void JumpNotEqualReg(Register reg)
+    {
+        if (!GetFlag(Flag::Zero))
+            Reg(Register::IP) = Reg(reg);
+    }
+
+    void JumpEqual(WORD addr)
+    {
+        if (GetFlag(Flag::Zero))
+            Reg(Register::IP) = addr;
+    }
+
+    void JumpNotEqual(WORD addr)
+    {
+        if (!GetFlag(Flag::Zero))
             Reg(Register::IP) = addr;
     }
 
@@ -186,11 +211,7 @@ public:
         return _reg_file[static_cast<size_t>(reg)];
     }
 
-private:
-    static_assert(sizeof(DWORD) > sizeof(WORD));
-    const static WORD MSB_I = ((sizeof(WORD) * 8) - 1);
-    const static WORD CB_I = ((sizeof(WORD) * 8));
-    
+private:    
     using RegisterFile = std::array<WORD, static_cast<size_t>(Register::R_NUM)>;
 
     RegisterFile _reg_file{ 0 };
