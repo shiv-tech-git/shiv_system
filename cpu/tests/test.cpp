@@ -1,31 +1,6 @@
 #include <gtest/gtest.h>
 #include "cpu.h"
 
-struct CpuTest : ::testing::Test {
-    static constexpr size_t kMemSize = 1024;
-    RAM ram{ kMemSize };
-    Core cpu{ ram };
-
-    // Convenience
-    WORD& R(Core::Register r) { return cpu.Reg(r); }
-
-    void SetIP(WORD ip) { R(Core::Register::IP) = ip; }
-    void SetSP(WORD sp) { R(Core::Register::SP) = sp; }
-    void SetRA(WORD ra) { R(Core::Register::RA) = ra; }
-
-    uint8_t Z() { return cpu.GetFlag(Core::Flag::Zero); }
-    uint8_t N() { return cpu.GetFlag(Core::Flag::Negative); }
-    uint8_t C() { return cpu.GetFlag(Core::Flag::Carry); }
-    uint8_t V() { return cpu.GetFlag(Core::Flag::Overflow); }
-
-    void ExpectFlags(uint8_t z, uint8_t n, uint8_t c, uint8_t v) {
-        EXPECT_EQ(Z(), z);
-        EXPECT_EQ(N(), n);
-        EXPECT_EQ(C(), c);
-        EXPECT_EQ(V(), v);
-    }
-};
-
 TEST(CPUTest, AddTest)
 {
     RAM ram{ 0 };
@@ -120,7 +95,6 @@ TEST(CPUTest, SubOverflowTests)
     EXPECT_TRUE(core.GetFlag(Core::Flag::Overflow)); // signed overflow
 }
 
-
 TEST(CPUTest, ShiftTest)
 {
     RAM ram{ 0 };
@@ -155,6 +129,33 @@ TEST(CPUTest, BitwiseTest)
     core.Xor(Core::Register::R3, Core::Register::R1, Core::Register::R2);
     EXPECT_EQ(core.Reg(Core::Register::R3), 0xff00ff00);
 }
+
+
+// everything below is written by AI
+struct CpuTest : ::testing::Test {
+    static constexpr size_t kMemSize = 1024;
+    RAM ram{ kMemSize };
+    Core cpu{ ram };
+
+    // Convenience
+    WORD& R(Core::Register r) { return cpu.Reg(r); }
+
+    void SetIP(WORD ip) { R(Core::Register::IP) = ip; }
+    void SetSP(WORD sp) { R(Core::Register::SP) = sp; }
+    void SetRA(WORD ra) { R(Core::Register::RA) = ra; }
+
+    uint8_t Z() { return cpu.GetFlag(Core::Flag::Zero); }
+    uint8_t N() { return cpu.GetFlag(Core::Flag::Negative); }
+    uint8_t C() { return cpu.GetFlag(Core::Flag::Carry); }
+    uint8_t V() { return cpu.GetFlag(Core::Flag::Overflow); }
+
+    void ExpectFlags(uint8_t z, uint8_t n, uint8_t c, uint8_t v) {
+        EXPECT_EQ(Z(), z);
+        EXPECT_EQ(N(), n);
+        EXPECT_EQ(C(), c);
+        EXPECT_EQ(V(), v);
+    }
+};
 
 TEST_F(CpuTest, AddImmediate_basic_no_flags) {
     R(Core::Register::R1) = 10;
