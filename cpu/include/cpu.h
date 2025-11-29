@@ -5,8 +5,10 @@
 #include <string.h>
 #include <assert.h>
 
+using HWORD = uint16_t;
 using WORD = uint32_t;
 using DWORD = uint64_t;
+
 const static WORD MSB_I = ((sizeof(WORD) * 8) - 1);
 const static WORD CB_I = ((sizeof(WORD) * 8));
 
@@ -41,7 +43,8 @@ class Core
 public:
     enum class Register: uint8_t
     {
-        R1 = 0,
+        RZ= 0,
+        R1,
         R2,
         R3,
         R4,
@@ -49,6 +52,7 @@ public:
         R6,
         R7,
         R8,
+        RA,
         IP,
         SP,
         FLAGS,
@@ -80,35 +84,39 @@ public:
 
     uint8_t GetFlag(Flag flag)
     {
-        return Reg(Register::FLAGS) & (1 << static_cast<uint32_t>(flag));
+        return (Reg(Register::FLAGS) >> static_cast<uint32_t>(flag)) & 1;
+    }
+
+    void Push(Register src)
+    {
+        Reg(Register::SP) -= sizeof(WORD);
+        _ram.Write(Reg(Register::SP), Reg(src));
+    }
+
+    void Pop(Register dst)
+    {
+        Reg(dst) = _ram.Read(Reg(Register::SP));
+        Reg(Register::SP) += sizeof(WORD);
+    }
+
+    void AddImmediate(Register dst, Register reg1, WORD op2)
+    {
+        Reg(dst) = DoAdd(Reg(reg1), op2);
     }
 
     void Add(Register dst, Register reg1, Register reg2)
     {
-        WORD op1 = Reg(reg1);
-        WORD op2 = Reg(reg2);
-        DWORD wide_op1 = static_cast<DWORD>(op1);
-        DWORD wide_op2 = static_cast<DWORD>(op2);
-        
-        DWORD wide_res = wide_op1 + wide_op2;
-        WORD res = static_cast<WORD>(wide_res);
+        AddImmediate(dst, reg1, Reg(reg2));
+    }
 
-        UpdateZeroFlag(res);
-        UpdateNegativeFlag(res);
-        UpdateCarryFlag(wide_res);
-
-        uint8_t op1_sign = op1 >> MSB_I;
-        uint8_t op2_sign = op2 >> MSB_I;
-        uint8_t res_sign = res >> MSB_I;
-        uint8_t overflow = ~(op1_sign ^ op2_sign) & (op1_sign ^ res_sign);
-        UpdateFlag(Flag::Overflow, overflow);
-
-        Reg(dst) = res;
+    void SubImmediate(Register dst, Register reg1, WORD op2)
+    {
+        Reg(dst) = DoSub(Reg(reg1), op2);
     }
 
     void Sub(Register dst, Register reg1, Register reg2)
     {
-        Reg(dst) = DoSub(Reg(reg1), Reg(reg2));
+        SubImmediate(dst, reg1, Reg(reg2));
     }
 
     void Cmp(Register reg1, Register reg2)
@@ -116,19 +124,19 @@ public:
         (void)DoSub(Reg(reg1), Reg(reg2));
     }
 
-    void Move(Register dst, Register src)
-    {
-        Reg(dst) = Reg(src);
-    }
-
     void Load(Register reg1, Register addr)
     {
         Reg(reg1) = _ram.Read(Reg(addr));
     }
 
-    void LoadImmediate(Register reg1, WORD data)
+    void LoadImmediate(Register reg1, WORD op2)
     {
-        Reg(reg1) = data;
+        Reg(reg1) = op2;
+    }
+
+    void LoadUpperImmediate(Register reg1, WORD op2)
+    {
+        Reg(reg1) = op2 << (sizeof(HWORD) * 8);
     }
 
     void Store(Register reg1, Register addr)
@@ -136,33 +144,55 @@ public:
         _ram.Write(Reg(addr), Reg(reg1));
     }
 
-    void Jump(Register reg, WORD addr)
+    void Jump(WORD addr)
     {
-        if (!Reg(reg))
+        Reg(Register::IP) = addr;
+    }
+    
+    void Call(WORD addr)
+    {
+        Reg(Register::RA) = Reg(Register::IP) + sizeof(WORD);
+        Reg(Register::IP) = addr;
+    }
+    
+    void Ret()
+    {
+        Reg(Register::IP) = Reg(Register::RA);
+    }
+
+    void BranchEqual(WORD addr)
+    {
+        if (Equal())
             Reg(Register::IP) = addr;
     }
 
-    void JumpEqualReg(Register reg)
+    void BranchNotEqual(WORD addr)
     {
-        if (GetFlag(Flag::Zero))
-            Reg(Register::IP) = Reg(reg);
-    }
-
-    void JumpNotEqualReg(Register reg)
-    {
-        if (!GetFlag(Flag::Zero))
-            Reg(Register::IP) = Reg(reg);
-    }
-
-    void JumpEqual(WORD addr)
-    {
-        if (GetFlag(Flag::Zero))
+        if (!Equal())
             Reg(Register::IP) = addr;
     }
 
-    void JumpNotEqual(WORD addr)
+    void BranchLessThan(WORD addr)
     {
-        if (!GetFlag(Flag::Zero))
+        if (LessThan())
+            Reg(Register::IP) = addr;
+    }
+
+    void BranchLessOrEqual(WORD addr)
+    {
+        if (LessOrEqual())
+            Reg(Register::IP) = addr;
+    }
+
+    void BranchGreaterThan(WORD addr)
+    {
+        if (GreaterThan())
+            Reg(Register::IP) = addr;
+    }
+
+    void BranchGreaterOrEqual(WORD addr)
+    {
+        if (GreaterOrEqual())
             Reg(Register::IP) = addr;
     }
 
@@ -216,6 +246,52 @@ private:
 
     RegisterFile _reg_file{ 0 };
     RAM& _ram;
+
+    bool Equal()
+    {
+        return GetFlag(Flag::Zero) == 1;
+    }
+    
+    bool LessThan()
+    {
+        return GetFlag(Flag::Negative) != GetFlag(Flag::Overflow);
+    }
+
+    bool LessOrEqual()
+    {
+        return GetFlag(Flag::Zero) == 1 || (GetFlag(Flag::Negative) != GetFlag(Flag::Overflow));
+    }
+
+    bool GreaterThan()
+    {
+        return !LessOrEqual();
+    }
+
+    bool GreaterOrEqual()
+    {
+        return !LessThan();
+    }
+
+    WORD DoAdd(WORD op1, WORD op2)
+    {
+        DWORD wide_op1 = static_cast<DWORD>(op1);
+        DWORD wide_op2 = static_cast<DWORD>(op2);
+        
+        DWORD wide_res = wide_op1 + wide_op2;
+        WORD res = static_cast<WORD>(wide_res);
+
+        UpdateZeroFlag(res);
+        UpdateNegativeFlag(res);
+        UpdateCarryFlag(wide_res);
+
+        uint8_t op1_sign = op1 >> MSB_I;
+        uint8_t op2_sign = op2 >> MSB_I;
+        uint8_t res_sign = res >> MSB_I;
+        uint8_t overflow = ~(op1_sign ^ op2_sign) & (op1_sign ^ res_sign);
+        UpdateFlag(Flag::Overflow, overflow);
+
+        return res;
+    }
 
     WORD DoSub(WORD op1, WORD op2)
     {
