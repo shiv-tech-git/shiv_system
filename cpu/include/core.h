@@ -1,42 +1,10 @@
 #pragma once
 
 #include <array>
-#include <vector>
-#include <string.h>
 #include <assert.h>
 
-using HWORD = uint16_t;
-using WORD = uint32_t;
-using DWORD = uint64_t;
-
-const static WORD MSB_I = ((sizeof(WORD) * 8) - 1);
-const static WORD CB_I = ((sizeof(WORD) * 8));
-
-class RAM
-{
-public:
-    using Memory = std::vector<uint8_t>;
-
-    RAM(size_t size) :
-        _mem(size, 0)
-    {
-    }
-
-    void Write(WORD addr, WORD word)
-    {
-        ::memcpy(_mem.data() + addr, &word, sizeof(WORD));
-    }
-
-    WORD Read(WORD addr)
-    {
-        WORD tmp;
-        ::memcpy(&tmp, _mem.data() + addr, sizeof(WORD));
-        return tmp;
-    }
-
-private:
-    Memory _mem;
-};
+#include <cpu_common.h>
+#include <ram.h>
 
 class Core
 {

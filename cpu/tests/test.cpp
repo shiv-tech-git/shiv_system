@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
-#include "cpu.h"
+#include "ram.h"
+#include "core.h"
 
 TEST(CPUTest, AddTest)
 {
