@@ -3,37 +3,12 @@
 #include <array>
 #include <assert.h>
 
-#include <cpu_common.h>
+#include <isa.h>
 #include <ram.h>
 
 class Core
 {
 public:
-    enum class Register: uint8_t
-    {
-        RZ= 0,
-        R1,
-        R2,
-        R3,
-        R4,
-        R5,
-        R6,
-        R7,
-        R8,
-        RA,
-        IP,
-        SP,
-        FLAGS,
-        R_NUM
-    };
-
-    enum class Flag: uint8_t
-    {
-        Zero = 0,
-        Carry,
-        Overflow,
-        Negative
-    };
     
     Core(RAM& ram):
     _ram(ram)
@@ -84,7 +59,12 @@ public:
 
     void Sub(Register dst, Register reg1, Register reg2)
     {
-        SubImmediate(dst, reg1, Reg(reg2));
+        Reg(dst) = DoSub(Reg(reg1), Reg(reg2));
+    }
+
+    void CmpImmediate(Register reg1, WORD op2)
+    {
+        (void)DoSub(Reg(reg1), op2);
     }
 
     void Cmp(Register reg1, Register reg2)
@@ -126,42 +106,6 @@ public:
     void Ret()
     {
         Reg(Register::IP) = Reg(Register::RA);
-    }
-
-    void BranchEqual(WORD addr)
-    {
-        if (Equal())
-            Reg(Register::IP) = addr;
-    }
-
-    void BranchNotEqual(WORD addr)
-    {
-        if (!Equal())
-            Reg(Register::IP) = addr;
-    }
-
-    void BranchLessThan(WORD addr)
-    {
-        if (LessThan())
-            Reg(Register::IP) = addr;
-    }
-
-    void BranchLessOrEqual(WORD addr)
-    {
-        if (LessOrEqual())
-            Reg(Register::IP) = addr;
-    }
-
-    void BranchGreaterThan(WORD addr)
-    {
-        if (GreaterThan())
-            Reg(Register::IP) = addr;
-    }
-
-    void BranchGreaterOrEqual(WORD addr)
-    {
-        if (GreaterOrEqual())
-            Reg(Register::IP) = addr;
     }
 
     void ShiftRight(Register dst, Register reg1, Register reg2)
@@ -210,7 +154,7 @@ public:
     }
 
 private:    
-    using RegisterFile = std::array<WORD, static_cast<size_t>(Register::R_NUM)>;
+    using RegisterFile = std::array<WORD, static_cast<size_t>(Register::__NUM)>;
 
     RegisterFile _reg_file{ 0 };
     RAM& _ram;
