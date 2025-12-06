@@ -22,7 +22,7 @@
 //  13  001101  ANDI     R1, R2, imm16       # R1 = R2 AND imm16
 //  14  001110  XOR      R1, R2, R3          # R1 = R2 XOR R3
 //  15  001111  XORI     R1, R2, imm16       # R1 = R2 XOR imm16
-//  16  010000  NOT      R1, R2, R3          # R1 = R2 NOT R3
+//  16  010000  NOT      R1, R2              # R1 = NOT R2
 //
 //  ====================== MEMORY =============================
 //  17  010001  LB       R1, [R2]           # R1 = RAM[R3]  # Load byte unsigned 
@@ -30,7 +30,7 @@
 //  19  010011  LH       R1, [R2]           # R1 = RAM[R3]  # Load half signed
 //  20  010100  LHU      R1, [R2]           # R1 = RAM[R3]  # Load half unsigned
 //  21  010101  LW       R1, [R2]           # R1 = RAM[R3]  # Load word signed
-//  22  010110  LWU      R1, [R2]           # R1 = RAM[R3]  # Load word unsigned
+//  22  010110  -----------------------------------------------
 //  23  011111  SB       R1, [R2]           # RAM[R4] = R2  # Store byte
 //  24  011000  SH       R1, [R2]           # RAM[R4] = R2  # Store half
 //  25  011001  SW       R1, [R2]           # RAM[R4] = R2  # Store word

@@ -19,9 +19,8 @@ add_executable(cpu
 
 target_include_directories(cpu
     PRIVATE
-        ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/include
 )
-
 
 add_executable(cpu_tests
     tests/test.cpp
@@ -33,7 +32,7 @@ target_link_libraries(cpu_tests
 
 target_include_directories(cpu_tests
     PRIVATE
-        ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/include
 )
 
 include(GoogleTest)
