@@ -131,7 +131,7 @@ enum class InstructionType : uint8_t
     OP_R2,
     OP_R1_IMM16,
     OP_R1,
-    OP_IMM26,
+    OP_J,
     OP
 };
 

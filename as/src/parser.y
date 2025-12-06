@@ -20,14 +20,32 @@ void yyerror(const char* s) {
 }
 %}
 
-%token REGISTER IMM LABEL COLON
-%token ADD ADDI SUB SUBI LUI SHL SHLI SHR SHRI OR ORI AND ANDI XOR XORI NOT
-%token LB LBU LH LHU LW SB SH SW CMP CMPI
+// COMMON
+%token REGISTER IMM LABEL LOCAL_LABEL COLON
+%token COMMA LBRACK RBRACK
+%token INVALID
+// DATA
+%token D_BYTE D_WORD D_HWORD STRING SPACE STR_VALUE
+// SECTIONS
+%token TEXT RODATA DATA BSS
+// VISIBILITY
+%token GLOBL EXTERN
+// ARITHMETIC
+%token ADD ADDI SUB SUBI LUI
+// SHIFTS
+%token SHL SHLI SHR SHRI
+// LOGICAL
+%token OR ORI AND ANDI XOR XORI NOT
+// MEMORY
+%token LB LBU LH LHU LW SB SH SW
+// COMPARE
+%token CMP CMPI
+// BRANCHES
 %token B BEQ BNE BGT BGE BLT BLE 
-%token COMMA LBRACK RBRACK INVALID
-
-// TODO: 
-%token J JR CALL CALLR RET PUSH POP
+// CONTROL FLOW
+%token J JR CALL CALLR RET 
+// STACK
+%token PUSH POP
 
 %%
 program:
@@ -35,13 +53,41 @@ program:
     ;
 
 line:
-    instruction
+    directive
+    | instruction
     | label
+    ;
+
+directive:
+    TEXT
+    | DATA
+        { std::cout << "section data" << std::endl; }
+    | BSS
+        { std::cout << "section bss" << std::endl; }
+    | RODATA
+        { std::cout << "section rodata" << std::endl; }
+    | GLOBL LABEL
+        { std::cout << "global" << std::endl; }
+    | EXTERN LABEL
+        { std::cout << "exterm" << std::endl; }
+    | D_BYTE IMM
+        { std::cout << "byte " << $2 << std::endl; }
+    | D_HWORD IMM
+        { std::cout << "hword " << $2 << std::endl; }
+    | D_WORD IMM
+        { std::cout << "word " << $2 << std::endl; }
+    | SPACE IMM
+        { std::cout << "space " << $2 << std::endl; }
+    | STRING STR_VALUE
+        { std::cout << "string: " << $2 << std::endl; }
     ;
 
 label:
     LABEL COLON
-    { std::cout << "label " << $1 << std::endl; }
+        { std::cout << "label: " << $1 << std::endl; }
+    | LOCAL_LABEL COLON
+        { std::cout << "local label: " << $1 << std::endl; }
+    ;
 
 instruction:
     ADD REGISTER COMMA REGISTER COMMA REGISTER
@@ -110,5 +156,19 @@ instruction:
         { std::cout << "BLT " << $2 << std::endl; }
     | BLE LABEL
         { std::cout << "BLE " << $2 << std::endl; }
+    | J LABEL
+        { std::cout << "J " << $2 << std::endl; }
+    | JR REGISTER
+        { std::cout << "JR " << $2 << std::endl; }
+    | CALL LABEL
+        { std::cout << "CALL " << $2 << std::endl; }
+    | CALLR REGISTER
+        { std::cout << "CALL " << $2 << std::endl; }
+    | CALL RET
+        { std::cout << "RET" << std::endl; }
+    | PUSH REGISTER
+        { std::cout << "PUSH " << $2 << std::endl; }
+    | POP REGISTER
+        { std::cout << "POP " << $2 << std::endl; }
     ;
 %%
