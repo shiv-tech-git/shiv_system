@@ -112,6 +112,7 @@ private:
             { "RET",    Instruction::RET    },
             { "PUSH",   Instruction::PUSH   },
             { "POP",    Instruction::POP    }
+            { "HALT",   Instruction::HALT    }
         };
 
         auto it = instruction_map.find(mnemonics);
@@ -188,6 +189,7 @@ private:
             { Instruction::RET,       InstructionType::OP               },
             { Instruction::PUSH,      InstructionType::OP_R1            },
             { Instruction::POP,       InstructionType::OP_R1            }
+            { Instruction::HALT,      InstructionType::OP               }
         };
 
         auto it = instruction_type_map.find(instruction);

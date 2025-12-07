@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(FLEX REQUIRED)
 find_package(BISON REQUIRED)
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 BISON_TARGET(Parser
     ${CMAKE_CURRENT_SOURCE_DIR}/src/parser.y
     ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp

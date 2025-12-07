@@ -7,7 +7,8 @@
 %}
 
 REG         R[0-9]+
-IMM         [0-9]+
+NUMBER_DEC  [0-9]+
+NUMBER_HEX  0x[0-9]+
 LABEL       [A-Za-z][A-Za-z0-9_]*
 LOCAL_LABEL _[A-Za-z][A-Za-z0-9_]*
 WS          [ \t\r\n]+
@@ -64,10 +65,14 @@ WS          [ \t\r\n]+
 ".hword"    { return D_HWORD; }
 ".word"     { return D_WORD; }
 ".space"    { return SPACE; }
-".string"   { return STRING; }
+".ascii"    { return STRING; }
 
-{REG}       { yylval = yytext; return REGISTER; }
-{IMM}       { yylval = yytext; return IMM; }
+"%hi"       { return HI; }
+"%lo"       { return LO; }
+
+{REG}           { yylval = yytext; return REGISTER; }
+{NUMBER_DEC}    { yylval = yytext; return NUMBER; }
+{NUMBER_HEX}    { yylval = yytext; return NUMBER; }
 {LABEL}     { yylval = yytext; return LABEL; }
 {LOCAL_LABEL}  { yylval = yytext; return LOCAL_LABEL; }
 
@@ -84,7 +89,10 @@ WS          [ \t\r\n]+
 ","         { return COMMA; }
 "["         { return LBRACK; }
 "]"         { return RBRACK; }
+"("         { return LPARAN; }
+")"         { return RPARAN; }
 
+";".*       { /* ignore single-line comment */ }
 {WS}        { /* skip */ }
 .           { std::cerr << "LEX: unknown '" << yytext << "'" << std::endl; return INVALID; }
 

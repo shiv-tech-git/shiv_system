@@ -40,16 +40,16 @@
 //  27  011011  CMPI     R1, imm16           # R1 - imm16, update flags
 //
 //  ====================== BRANCHES ===========================
-//  28  011100  B        offset              # IP = IP + offset    
-//  29  011101  BEQ      offset              # IP = IP + offset  # Branch if equal
-//  30  011110  BNE      offset              # IP = IP + offset  # Branch if not equal
-//  31  011111  BGT      offset              # IP = IP + offset  # Branch if greater that
-//  32  100000  BGE      offset              # IP = IP + offset  # Branch if greater or equal
-//  33  100001  BLT      offset              # IP = IP + offset  # Branch if less than
-//  34  100010  BLE      offset              # IP = IP + offset  # Branch if less or equal
+//  28  011100  B        label               # IP = IP + offset    
+//  29  011101  BEQ      label               # IP = IP + offset  # Branch if equal
+//  30  011110  BNE      label               # IP = IP + offset  # Branch if not equal
+//  31  011111  BGT      label               # IP = IP + offset  # Branch if greater that
+//  32  100000  BGE      label               # IP = IP + offset  # Branch if greater or equal
+//  33  100001  BLT      label               # IP = IP + offset  # Branch if less than
+//  34  100010  BLE      label               # IP = IP + offset  # Branch if less or equal
 //
 // ==================== CONTROL FLOW =========================
-//  35  100011  J        label               # IP = IP + offset16
+//  35  100011  J        label               # IP = IP + offset
 //  36  100100  JR       R1                  # IP = R1
 //  37  100101  CALL     label               # RA = IP; IP = IP + offset
 //  38  100110  CALLR    R1                  # RA = IP; IP = R1
@@ -58,6 +58,8 @@
 // ====================== STACK ==============================
 //  40  101000  PUSH     R1                  # SP = SP + 4; RAM[SP] = R1
 //  41  101001  POP      R1                  # R1 = RAM[SP]; SP = SP - 4
+//====================== MISC ==============================
+//  41  101010  HALT                         # Stops execution
 //
 //
 //               32 | 31| 30| 29| 28| 27| 26| 25| 24| 23| 22| 21| 20| 19| 18| 17| 16| 15| 14| 13| 12| 11| 10| 09| 08| 07| 06| 05| 04| 03| 02| 01| 00|
@@ -121,6 +123,7 @@ enum class Instruction : uint8_t
     RET,
     PUSH,
     POP,
+    HALT,
     __NUM
 };
 
@@ -159,6 +162,14 @@ enum class Flag: uint8_t
     Carry,
     Overflow,
     Negative
+};
+
+enum class Section: uint8_t
+{
+    TEXT = 0,
+    RODATA,
+    DATA,
+    BSS
 };
 
 using BYTE  = uint8_t;

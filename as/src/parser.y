@@ -12,6 +12,7 @@
 #include <cstring>
 #include "parser.hpp"
 #include "isa.h"
+#include "as.h"
 
 int yylex();
 extern char* yytext;
@@ -21,9 +22,11 @@ void yyerror(const char* s) {
 %}
 
 // COMMON
-%token REGISTER IMM LABEL LOCAL_LABEL COLON
-%token COMMA LBRACK RBRACK
+%token REGISTER NUMBER LABEL LOCAL_LABEL COLON
+%token COMMA LBRACK RBRACK LPARAN RPARAN
 %token INVALID
+// OPERATORS
+%token HI LO
 // DATA
 %token D_BYTE D_WORD D_HWORD STRING SPACE STR_VALUE
 // SECTIONS
@@ -70,13 +73,13 @@ directive:
         { std::cout << "global" << std::endl; }
     | EXTERN LABEL
         { std::cout << "exterm" << std::endl; }
-    | D_BYTE IMM
+    | D_BYTE NUMBER
         { std::cout << "byte " << $2 << std::endl; }
-    | D_HWORD IMM
+    | D_HWORD NUMBER
         { std::cout << "hword " << $2 << std::endl; }
-    | D_WORD IMM
+    | D_WORD NUMBER
         { std::cout << "word " << $2 << std::endl; }
-    | SPACE IMM
+    | SPACE NUMBER
         { std::cout << "space " << $2 << std::endl; }
     | STRING STR_VALUE
         { std::cout << "string: " << $2 << std::endl; }
@@ -89,36 +92,44 @@ label:
         { std::cout << "local label: " << $1 << std::endl; }
     ;
 
+imm16: 
+    NUMBER
+    | HI LBRACK LABEL RBRACK
+        { std::cout << "%hi[]" << $2 << "]" << std::endl; }
+    | LO LBRACK LABEL RBRACK
+        { std::cout << "%lo[" << $2 << "]" << std::endl; }
+    ;
+
 instruction:
     ADD REGISTER COMMA REGISTER COMMA REGISTER
         { std::cout << "ADD " << $2 << "," << $4 << "," << $6 << std::endl; }
-    | ADDI REGISTER COMMA REGISTER COMMA IMM
+    | ADDI REGISTER COMMA REGISTER COMMA NUMBER
         { std::cout << "ADDI " << $2 << "," << $4 << "," << $6 << std::endl; }
     | SUB REGISTER COMMA REGISTER COMMA REGISTER
         { std::cout << "SUB " << $2 << "," << $4 << "," << $6 << std::endl; }
-    | SUBI REGISTER COMMA REGISTER COMMA IMM
+    | SUBI REGISTER COMMA REGISTER COMMA NUMBER
         { std::cout << "SUBI " << $2 << "," << $4 << "," << $6 << std::endl; }
-    | LUI REGISTER COMMA IMM
+    | LUI REGISTER COMMA imm16
         { std::cout << "LUI " << $2 << "," << $4 << std::endl; }
     | SHL REGISTER COMMA REGISTER COMMA REGISTER
         { std::cout << "SHL " << $2 << "," << $4 << "," << $6 << std::endl; }
-    | SHLI REGISTER COMMA REGISTER COMMA IMM
+    | SHLI REGISTER COMMA REGISTER COMMA NUMBER
         { std::cout << "SHLI " << $2 << "," << $4 << "," << $6 << std::endl; }
     | SHR REGISTER COMMA REGISTER COMMA REGISTER
         { std::cout << "SHR " << $2 << "," << $4 << "," << $6 << std::endl; }
-    | SHRI REGISTER COMMA REGISTER COMMA IMM
+    | SHRI REGISTER COMMA REGISTER COMMA NUMBER
         { std::cout << "SHRI " << $2 << "," << $4 << "," << $6 << std::endl; }
     | OR REGISTER COMMA REGISTER COMMA REGISTER
         { std::cout << "OR " << $2 << "," << $4 << "," << $6 << std::endl; }
-    | ORI REGISTER COMMA REGISTER COMMA IMM
+    | ORI REGISTER COMMA REGISTER COMMA imm16
         { std::cout << "ORI " << $2 << "," << $4 << "," << $6 << std::endl; }
     | AND REGISTER COMMA REGISTER COMMA REGISTER
         { std::cout << "AND " << $2 << "," << $4 << "," << $6 << std::endl; }
-    | ANDI REGISTER COMMA REGISTER COMMA IMM
+    | ANDI REGISTER COMMA REGISTER COMMA NUMBER
         { std::cout << "ANDI " << $2 << "," << $4 << "," << $6 << std::endl; }
     | XOR REGISTER COMMA REGISTER COMMA REGISTER
         { std::cout << "XOR " << $2 << "," << $4 << "," << $6 << std::endl; }
-    | XORI REGISTER COMMA REGISTER COMMA IMM
+    | XORI REGISTER COMMA REGISTER COMMA NUMBER
         { std::cout << "XORI " << $2 << "," << $4 << "," << $6 << std::endl; }
     | NOT REGISTER COMMA REGISTER
         { std::cout << "NOT " << $2 << "," << $4 << std::endl; }
@@ -140,7 +151,7 @@ instruction:
         { std::cout << "SW " << $2 << ",[" << $5 << "]" << std::endl; }
     | CMP REGISTER COMMA REGISTER
         { std::cout << "CMP " << $2 << "," << $4 << std::endl; }
-    | CMPI REGISTER COMMA IMM
+    | CMPI REGISTER COMMA NUMBER
         { std::cout << "CMPI " << $2 << "," << $4 << std::endl; }
     | B LABEL
         { std::cout << "B " << $2 << std::endl; }
@@ -164,7 +175,7 @@ instruction:
         { std::cout << "CALL " << $2 << std::endl; }
     | CALLR REGISTER
         { std::cout << "CALL " << $2 << std::endl; }
-    | CALL RET
+    | RET
         { std::cout << "RET" << std::endl; }
     | PUSH REGISTER
         { std::cout << "PUSH " << $2 << std::endl; }
